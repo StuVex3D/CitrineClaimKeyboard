@@ -5,13 +5,15 @@ import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
 import android.inputmethodservice.InputMethodService
 import android.view.View
+import android.view.KeyEvent
+import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
 import android.widget.Button
 import android.widget.LinearLayout
 import android.view.ViewGroup
 
 class ClaimKeyboardService : InputMethodService() {
- private val rows = listOf(listOf("A","B"), listOf("C","D"), listOf("E","FF","G"), listOf("H","I","J"), listOf("K","L","M","N"), listOf("O","P","Q"))
+ private val rows = listOf(listOf("A","B"), listOf("C","D"), listOf("E","FF","G"), listOf("H","I","J"), listOf("K","M","N"), listOf("O","P","Q"))
  private fun dp(n:Int)=(n*resources.displayMetrics.density).toInt()
  override fun onCreateInputView(): View {
   val root=LinearLayout(this).apply { orientation=LinearLayout.VERTICAL; setPadding(dp(4),dp(7),dp(4),dp(8)); setBackgroundColor(Color.rgb(28,36,44)) }
@@ -35,6 +37,16 @@ class ClaimKeyboardService : InputMethodService() {
   control("Switch",1f) { (getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager).showInputMethodPicker() }
   control("Delete",1f) { currentInputConnection?.deleteSurroundingText(1,0) }
   control("Space",1f) { currentInputConnection?.commitText(" ",1) }
+  control("Send ↵",1.25f) {
+   val action = currentInputEditorInfo?.imeOptions?.and(EditorInfo.IME_MASK_ACTION) ?: EditorInfo.IME_ACTION_NONE
+   val connection = currentInputConnection
+   if (action != EditorInfo.IME_ACTION_NONE && action != EditorInfo.IME_ACTION_UNSPECIFIED) {
+    connection?.performEditorAction(action)
+   } else {
+    connection?.sendKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_ENTER))
+    connection?.sendKeyEvent(KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_ENTER))
+   }
+  }
   root.addView(controls)
   return root
  }
